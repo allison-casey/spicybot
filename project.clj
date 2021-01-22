@@ -5,7 +5,7 @@
             :url "https://www.eclipse.org/legal/epl-2.0/"}
   :dependencies [[org.clojure/clojure "1.10.1"]
                  [org.suskalo/discljord "1.1.1"]
-                 [funcool/cuerdas "2.2.1"]
-                 ]
+                 [funcool/cuerdas "2.2.1"]]
+  :aot :all
   :repl-options {:init-ns spicybot.core}
   :main spicybot.core)

@@ -1,4 +1,5 @@
 (ns spicybot.core
+  (:gen-class)
   (:require ;; Clojure
             [clojure.edn :as edn]
             [clojure.core.async :refer [chan close!]]
