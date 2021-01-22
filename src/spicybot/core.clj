@@ -26,7 +26,7 @@
 (defn random-response [user]
   (str (rand-nth (:responses config)) ", " (mention-user user) \!))
 
-;; Spicy Helpers
+;; **  Spicy Helpers
 (def ^:private reactions
   {:thumbs-up "👍"
    :x "❌"})
@@ -54,7 +54,7 @@
          (some #(perm/has-permission-flag? :administrator (:permissions %)))
          boolean)))
 
-;; Spicybot Command Multidef
+;; ** Spicybot Command Multidef
 (defmulti handle-spicy-cmd (fn [command args event-data] command))
 
 (defmethod handle-spicy-cmd "help"
@@ -64,14 +64,29 @@
    channel-id
    :embed (embed/help)))
 
+(defn suggest
+  "suggest a movie"
+  [channel-id message-id author-id username movie]
+  (if-not (str/empty-or-nil? movie)
+    (do (add-suggestion author-id username movie)
+        (react! channel-id message-id :thumbs-up))
+    (react! channel-id message-id :x)))
+
+
 (defmethod handle-spicy-cmd "suggest"
   [_ args {:keys [channel-id id author] :as data}]
   (let [{author-id :id, username :username} author
         movie (str/join " " args)]
-    (if-not (str/empty-or-nil? movie)
-      (do (add-suggestion author-id username movie)
-          (react! channel-id id :thumbs-up))
-      (react! channel-id id :x))))
+    (suggest channel-id id author-id username movie)))
+
+(defmethod handle-spicy-cmd "suggestas"
+  [_ args {:keys [channel-id id author mentions guild-id]}]
+  (if (admin? (:id author) guild-id)
+    (let [[_ & movie] args
+          as (first mentions)
+          movie (str/join " " movie)]
+      (suggest channel-id id (:id as) (:username as) movie))
+    (react! channel-id id :x)))
 
 (defmethod handle-spicy-cmd "suggested"
   [_ _ {:keys [channel-id id]}]
@@ -101,10 +116,10 @@
 (defmethod handle-spicy-cmd :default
   [command args event-data])
 
-;; Discljord Event MultiDef
+;; ** Discljord Event MultiDef
 (defmulti handle-event (fn [type _data] type))
 
-;; Server Message Creation Event
+;; ** Server Message Creation Event
 (defmethod handle-event :message-create
   [_ {:keys [channel-id author mentions content] :as data}]
   (when (and (not (:bot author)) (str/starts-with? content "!"))
@@ -112,7 +127,7 @@
           command (str/strip-prefix command "!")]
       (handle-spicy-cmd command args data))))
 
-;; Bot Boilerplate
+;; ** Bot Boilerplate
 (defmethod handle-event :ready
   [_ _]
   (discord-ws/status-update! (:gateway @bot-state) :activity (discord-ws/create-activity :name (:playing config))))
