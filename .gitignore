@@ -1,4 +1,6 @@
 config.edn
+.clj-kondo
+.lsp
 /target
 /classes
 /checkouts
